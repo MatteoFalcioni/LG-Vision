@@ -1,5 +1,6 @@
 # LG-Vision
-LangGraph agentic system leveraging VLMs for complex visual tasks
+
+LangGraph agentic system leveraging VLMs for complex visual tasks. Using LangGraph v1 alpha.
 
 ## Quick Start 
 
@@ -7,12 +8,28 @@ Clone this repository:
 
 ```bash
 git clone https://github.com/MatteoFalcioni/LG-Vision
+cd LG-Vision
 ``` 
+
+Copy the `.env.example` file into a `.env` file, and fill at least one of the api keys fields (you can select which provider you want to use with the `PROVIDER` env variable)
+
+```bash
+cp .env.example .env
+``` 
+
+```
+FIREWORKS_API_KEY=__FIREWORKS_API_KEY__  # QWEN (ALIBABA) models https://fireworks.ai/models/fireworks/qwen2p5-vl-32b-instruct
+OPENAI_API_KEY=__OPENAI_API_KEY__  # GPT
+ANTHROPIC_API_KEY=__ANTHROPIC_API_KEY__  # CLAUDE
+
+PROVIDER="OPENAI"  # Options: "OPENAI", "ANTHROPIC", "QWEN"
+MODEL_DIM="SMALL" # ONLY FOR QWEN - Options: "SMALL", "LARGE"
+```
 
 create a fresh conda env with python >= 3.11:
 
 ```bash
-conda create env -n langgraph-multimodal python=3.11 -y
+conda create env -n LG-Vision python=3.11 -y
 ``` 
 
 Install all requirements:
