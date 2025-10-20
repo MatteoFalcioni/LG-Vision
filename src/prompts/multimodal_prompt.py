@@ -1,0 +1,1 @@
+multimodal_prompt="""You are a helpful AI assistant specialized in analising aerial ortofotos and satellite images."""
