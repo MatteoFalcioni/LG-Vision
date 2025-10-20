@@ -26,7 +26,7 @@ async def main():
     config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 50}
 
     print("***EXAMPLE 1***")
-    ex_img_b64 = encode_b64("../examples/ortofoto.png")
+    ex_img_b64 = encode_b64("../ortofoto_images/ortofoto_2024_direct.png")
 
     init_state1 = {
         "messages" : [HumanMessage(content="What can you see in this image?")],

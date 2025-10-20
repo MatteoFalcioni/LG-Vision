@@ -1,27 +1,48 @@
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command
 from typing import Literal
 from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 from langchain.agents import create_agent
-from langgraph.checkpoint.memory import InMemorySaver
 from dotenv import load_dotenv
 from pydantic import SecretStr
 import os
 
 from state import MultiState
 from utils import prepare_multimodal_message
-from prompts.multimodal import multimodal_prompt
+from prompts.multimodal_prompt import multimodal_prompt
 
 load_dotenv()
 
-model_alias = os.getenv("MODEL_ALIAS", "accounts/fireworks/models/qwen2p5-vl-32b-instruct")
+provider = os.getenv("PROVIDER", "QWEN")
 
-multimodal_model = ChatOpenAI(
-    api_key=SecretStr(os.environ["FIREWORKS_API_KEY"]),
-    base_url="https://api.fireworks.ai/inference/v1",
-    model=model_alias,
-    streaming=True,
-)
+if provider == "QWEN":
+    print("Using QWEN model")
+    model_alias = "accounts/fireworks/models/qwen3-vl-235b-a22b-instruct"
+    #accounts/fireworks/models/qwen2p5-vl-32b-instruct
+    multimodal_model = ChatOpenAI(
+        api_key=SecretStr(os.environ["FIREWORKS_API_KEY"]),
+        base_url="https://api.fireworks.ai/inference/v1",
+        model=model_alias
+    )
+elif provider == "OPENAI":
+    print("Using OPENAI model")
+    model_alias = "gpt-5"
+    multimodal_model=ChatOpenAI(
+        model=model_alias,
+        api_key=SecretStr(os.environ["OPENAI_API_KEY"])
+    )
+elif provider == "ANTHROPIC":
+    print("Using ANTHROPIC model")
+    model_alias = "claude-sonnet-4-5"
+    multimodal_model=ChatAnthropic(
+        model=model_alias,
+        api_key=SecretStr(os.getenviron["ANTHROPIC_API_KEY"])
+    )
+else:
+    raise RuntimeError(f"Invalid provider: {provider}")
+
+
 multimodal_agent = create_agent(
     model=multimodal_model,
     tools=[],
@@ -47,7 +68,28 @@ async def multimodal_node(state: MultiState) -> Command[Literal["__end__"]]:   #
     return Command(
         update={
             "messages" : [last_msg],  # must be a list
-            #"images" : [],  # not clearing images audios after invocation - trying to preserve them in memory 
+            #"images" : [],  # not clearing images after invocation - trying to preserve them in memory 
         },
         goto=END
     )
+
+def get_graph(checkpointer) -> StateGraph:
+    """
+    Get the builder for the graph
+    """
+    builder = StateGraph(MultiState)
+    # nodes
+    builder.add_node("multimodal_agent", multimodal_node)
+    # edges
+    builder.add_edge(START, "multimodal_agent")
+
+    graph = builder.compile(checkpointer=checkpointer)
+
+    # save the graph display to file
+    img = graph.get_graph().draw_mermaid_png() # returns bytes
+    # save the bytes to file 
+    with open("./graph.png", "wb") as f:
+        f.write(img)
+    print("Graph display saved to ./src/graph.png")
+
+    return graph
