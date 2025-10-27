@@ -32,7 +32,6 @@ def prepare_multimodal_message(state: MultiState) -> HumanMessage:
             "mime_type": "image/png"  # it would be better to auto detect myme at runtime - so maybe img encoding should be here and not in main
         })
 
-    # can also add file content block for pdfs
 
     # construct the messages as HumanMessage(content_blocks=...)
     message = HumanMessage(content_blocks=content_blocks)  # v1 format, see https://docs.langchain.com/oss/python/langchain/messages#multimodal

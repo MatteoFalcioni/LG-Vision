@@ -17,14 +17,7 @@ load_dotenv()
 provider = os.getenv("PROVIDER", "QWEN")
 
 if provider == "QWEN":
-    if os.getenv("MODEL_DIM") == "SMALL":
-        print("Using QWEN 32b model")
-        model_alias = "accounts/fireworks/models/qwen2p5-vl-32b-instruct"
-    elif os.getenv("MODEL_DIM") == "LARGE":
-        print("Using QWEN 235b model")
-        model_alias = "accounts/fireworks/models/qwen3-vl-235b-a22b-instruct"
-    else:
-        raise RuntimeError(f"Invalid model dimension: {os.getenv('MODEL_DIM')}")
+    model_alias = "accounts/fireworks/models/qwen2p5-vl-32b-instruct"
     multimodal_model = ChatOpenAI(
         api_key=SecretStr(os.environ["FIREWORKS_API_KEY"]),
         base_url="https://api.fireworks.ai/inference/v1",
@@ -42,18 +35,16 @@ elif provider == "ANTHROPIC":
     model_alias = "claude-sonnet-4-5"
     multimodal_model=ChatAnthropic(
         model=model_alias,
-        api_key=SecretStr(os.getenviron["ANTHROPIC_API_KEY"])
+        api_key=SecretStr(os.environ["ANTHROPIC_API_KEY"])
     )
 else:
     raise RuntimeError(f"Invalid provider: {provider}")
 
-
 multimodal_agent = create_agent(
     model=multimodal_model,
     tools=[],
-    prompt=multimodal_prompt
+    system_prompt=multimodal_prompt
 )
-
 
 async def multimodal_node(state: MultiState) -> Command[Literal["__end__"]]:   # after multimodal -> stop (could change later)
     """
