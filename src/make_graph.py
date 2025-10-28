@@ -64,7 +64,7 @@ async def multimodal_node(state: MultiState) -> Command[Literal["__end__"]]:   #
     return Command(
         update={
             "messages" : [last_msg],  # must be a list
-            #"images" : [],  # not clearing images after invocation - trying to preserve them in memory 
+            "images" : [],  # clearing images after invocation, keep memory lightweight
         },
         goto=END
     )
