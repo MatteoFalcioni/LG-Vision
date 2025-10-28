@@ -8,9 +8,9 @@ from dotenv import load_dotenv
 from pydantic import SecretStr
 import os
 
-from state import MultiState
-from utils import prepare_multimodal_message
-from prompts.multimodal_prompt import multimodal_prompt
+from .state import MultiState
+from .utils import prepare_multimodal_message
+from .prompts.multimodal_prompt import multimodal_prompt
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ if provider == "QWEN":
     )
 elif provider == "OPENAI":
     print("Using OPENAI model")
-    model_alias = "gpt-5"
+    model_alias = "gpt-4o"
     multimodal_model=ChatOpenAI(
         model=model_alias,
         api_key=SecretStr(os.environ["OPENAI_API_KEY"])

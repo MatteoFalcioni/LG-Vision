@@ -1,5 +1,5 @@
 from langchain_core.messages import HumanMessage
-from state import MultiState
+from .state import MultiState
 import base64
 
 # this is actually used in main.py
