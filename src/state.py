@@ -9,8 +9,8 @@ def add_b64(left : Union[List[str], None], right : Union[List[str], None]) -> Li
     In the future: could swap lists with dicitonaries with boolean flags for already inserted in chat.
     """
 
-    if right is not None and len(right) == 0:
-        return []   # explicit clear, when passing `update: "images" : []` or `"audios" : []`
+    if right is not None and len(right) == 0 and left is not None:
+        return []   # explicit clear, when passing `update: "images" : []` 
 
     if left is None:  # init left list
         left = []

@@ -8,40 +8,13 @@ from dotenv import load_dotenv
 from pydantic import SecretStr
 import os
 
-from state import MultiState
-from utils import prepare_multimodal_message
-from prompts.multimodal_prompt import multimodal_prompt
-
-load_dotenv()
-
-provider = os.getenv("PROVIDER", "QWEN")
-
-if provider == "QWEN":
-    model_alias = "accounts/fireworks/models/qwen2p5-vl-32b-instruct"
-    multimodal_model = ChatOpenAI(
-        api_key=SecretStr(os.environ["FIREWORKS_API_KEY"]),
-        base_url="https://api.fireworks.ai/inference/v1",
-        model=model_alias
-    )
-elif provider == "OPENAI":
-    print("Using OPENAI model")
-    model_alias = "gpt-5"
-    multimodal_model=ChatOpenAI(
-        model=model_alias,
-        api_key=SecretStr(os.environ["OPENAI_API_KEY"])
-    )
-elif provider == "ANTHROPIC":
-    print("Using ANTHROPIC model")
-    model_alias = "claude-sonnet-4-5"
-    multimodal_model=ChatAnthropic(
-        model=model_alias,
-        api_key=SecretStr(os.environ["ANTHROPIC_API_KEY"])
-    )
-else:
-    raise RuntimeError(f"Invalid provider: {provider}")
+from .state import MultiState
+from .utils import prepare_multimodal_message
+from .prompts.multimodal_prompt import multimodal_prompt
+from .models import get_multimodal_model
 
 multimodal_agent = create_agent(
-    model=multimodal_model,
+    model=get_multimodal_model(),
     tools=[],
     system_prompt=multimodal_prompt
 )
@@ -64,7 +37,7 @@ async def multimodal_node(state: MultiState) -> Command[Literal["__end__"]]:   #
     return Command(
         update={
             "messages" : [last_msg],  # must be a list
-            #"images" : [],  # not clearing images after invocation - trying to preserve them in memory 
+            "images" : [],  # clearing images after invocation, keep memory lightweight
         },
         goto=END
     )

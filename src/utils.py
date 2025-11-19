@@ -1,5 +1,5 @@
 from langchain_core.messages import HumanMessage
-from state import MultiState
+from .state import MultiState
 import base64
 
 # this is actually used in main.py
@@ -20,7 +20,7 @@ def prepare_multimodal_message(state: MultiState) -> HumanMessage:
     if messages and isinstance(messages[-1].content, str):
         text = messages[-1].content
     else:
-        text = "Analyze this media"
+        text = "Analyze this image based on the prompt provided"
     
     content_blocks = [{"type": "text", "text": text}]   # it is a list of typed dicts, see https://docs.langchain.com/oss/python/langchain/messages#multimodal
     
