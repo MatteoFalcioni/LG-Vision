@@ -10,7 +10,7 @@ def add_b64(left : Union[List[str], None], right : Union[List[str], None]) -> Li
     """
 
     if right is not None and len(right) == 0 and left is not None:
-        return []   # explicit clear, when passing `update: "images" : []` 
+        return []   # explicit clear, when passing `update: {"images" : []}` 
 
     if left is None:  # init left list
         left = []
@@ -18,7 +18,7 @@ def add_b64(left : Union[List[str], None], right : Union[List[str], None]) -> Li
     if right is None:   # init right list
         right = []
     
-    return left + right # (l, r) -> (l+r)
+    return left + right  # (l, r) -> (l+r)
 
 
 class MultiState(AgentState):

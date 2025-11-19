@@ -1,11 +1,15 @@
 from langchain_core.messages import HumanMessage
-from .state import MultiState
+from state import MultiState
+from prompts.mpllry_prompt import prompt
 import base64
 
 # this is actually used in main.py
-def encode_b64(file_path):
+def encode_b64_from_path(file_path):
     with open(file_path, "rb") as f:
         return base64.b64encode(f.read()).decode('utf-8')
+
+def encode_b64_paths(file_paths: list[str]) -> list[str]:
+    return [encode_b64_from_path(file_path) for file_path in file_paths]
 
 def prepare_multimodal_message(state: MultiState) -> HumanMessage:
     """
@@ -37,3 +41,50 @@ def prepare_multimodal_message(state: MultiState) -> HumanMessage:
     message = HumanMessage(content_blocks=content_blocks)  # v1 format, see https://docs.langchain.com/oss/python/langchain/messages#multimodal
     
     return message   # NOTE: returns msg as is, then you need to wrap it in a list!
+
+def get_multimodal_prompt(good_imgs_paths : list[str], bad_imgs_paths : list[str], text : str = prompt):
+    """
+    Constructs a multimodal system message, given the textual prompt and images to refer to. 
+    The textual prompt defaults to our own custom system prompt.
+    """
+    content = [[{"type": "text", "text": text}]]  # start with the prompt
+
+    # encode both good and bad images
+    good_b64 = encode_b64_paths(good_imgs_paths)
+    bad_b64  = encode_b64_paths(bad_imgs_paths)
+
+    # add good images
+    for good_img in good_b64:
+        good_text = "This image is acceptable:"
+        content.append(
+            {"type" : "text", "text" : good_text},
+            {
+                "type" : "image",
+                "base64" : good_img,
+                "mime_type" : "image/png"  # or image/jpg if jpg
+            }
+        )
+    # add bad images
+    for bad_img in bad_b64:
+        bad_text = "This image is discardable:"
+        content.append(
+            {"type" : "text", "text" : bad_text},
+            {
+                "type" : "image",
+                "base64" : bad_img,
+                "mime_type" : "image/png"  # or image/jpg if jpg
+            }
+        )
+
+    system_prompt = HumanMessage(content_blocks=content)
+    return system_prompt
+
+
+def get_mpllry_b64(num_imgs : int) -> list:
+    """
+    Leverages the Mapillary API to download `num_imgs` images.
+    Encodes the images in base 64, and returns a list of the encodings
+    """
+
+
+

@@ -8,8 +8,6 @@ from .state import MultiState
 from .utils import prepare_multimodal_message
 from .prompts.mpllry_prompt import mpllry_prompt
 
-
-
 mpllry_agent = create_agent(
     model=ChatOpenAI(model="gpt-4o-mini"),
     tools=[],
@@ -50,13 +48,5 @@ def get_graph(checkpointer, save_display=False) -> StateGraph:
     builder.add_edge(START, "multimodal_agent")
 
     graph = builder.compile(checkpointer=checkpointer)
-
-    if save_display:
-        # save the graph display to file
-        img = graph.get_graph().draw_mermaid_png() # returns bytes
-        # save the bytes to file 
-        with open("./graph.png", "wb") as f:
-            f.write(img)
-        print("Graph display saved to ./src/graph.png")
 
     return graph
