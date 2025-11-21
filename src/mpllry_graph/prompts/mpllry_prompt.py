@@ -16,6 +16,8 @@ Discard an image if **one of the following condition is met**:
 - the view is occluded by something, or
 - the image is blurry 
 
+If you accept an image, answer 'yes'. 
+If you discard an image, answer 'no'.
 """
 
 

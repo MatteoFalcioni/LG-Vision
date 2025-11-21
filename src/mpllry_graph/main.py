@@ -20,7 +20,7 @@ async def main():
     
     # get a mapillary image from api 
     images = get_mpllry_b64(
-        num_points=2,
+        num_points=1,
         save_images=True,
         save_folder="images"
         )
