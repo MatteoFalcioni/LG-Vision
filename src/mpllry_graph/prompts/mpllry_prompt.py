@@ -11,15 +11,16 @@ Follow these rules to evaluate if an image is acceptable or not.
 Accept an image if **all the following parameters are satisfied**: 
 - the image it shows clearly a complete view of the scene without being occluded
 - the image is not blurry
-- 
 
 Discard an image if **one of the following condition is met**:
 - the view is occluded by something, or
-- the image is blurry, or
-- 
+- the image is blurry 
 
+"""
+
+
+'''
 ## Examples 
 
 You will be shown in the following some examples of acceptable or discardable images.
-
-"""
+'''

@@ -2,6 +2,7 @@ import asyncio
 from langgraph.checkpoint.memory import InMemorySaver
 from make_graph import get_graph
 from utils import get_multimodal_prompt, get_mpllry_b64
+from langchain_core.messages import HumanMessage
 import uuid
 from tqdm import tqdm
 
@@ -17,11 +18,15 @@ async def main():
     thread_id = str(uuid.uuid4())[:8]
     config = {"configurable": {"thread_id": thread_id}}
     
-    # TODO: get a mapillary image from api 
-    images = get_mpllry_b64()
+    # get a mapillary image from api 
+    images = get_mpllry_b64(
+        num_points=2,
+        save_images=True,
+        save_folder="images"
+        )
 
     # Construct multimodal system message
-    sys_msg = get_multimodal_prompt() 
+    # sys_msg = get_multimodal_prompt() 
 
     print("\n=== Evaluating Mapillary images ===\n")
 
@@ -29,7 +34,7 @@ async def main():
     
         # Initialize state with the image 
         init_state = {
-            "messages": [sys_msg],
+            "messages": [HumanMessage(content="analize this image")],
             "images": [img_b64]
         }
         

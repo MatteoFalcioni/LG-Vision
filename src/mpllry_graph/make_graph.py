@@ -3,10 +3,13 @@ from langgraph.types import Command
 from typing import Literal
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
 from pydantic import BaseModel
 
 from state import MultiState
 from utils import prepare_multimodal_message
+
+load_dotenv()
 
 # Structured output
 class BinaryOutput(BaseModel):
@@ -16,7 +19,7 @@ class BinaryOutput(BaseModel):
 mpllry_agent = create_agent(
     model=ChatOpenAI(model="gpt-4o-mini"),
     tools=[],
-    system_prompt="You are an AI assitant that evaluates the quality of Mapilary images",  # short prompt because the real one is passed at runtime
+    system_prompt="You are an AI assistant that evaluates the quality of Mapilary images",  # short prompt because the real one is passed at runtime
     state_schema=MultiState,
     response_format=BinaryOutput
 )

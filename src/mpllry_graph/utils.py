@@ -5,7 +5,8 @@ import base64
 import requests
 import random
 import os
-import math 
+import math
+from pathlib import Path 
 
 # this is actually used in main.py
 def encode_b64_from_path(file_path):
@@ -84,7 +85,7 @@ def get_multimodal_prompt(good_imgs_paths : list[str], bad_imgs_paths : list[str
     return system_prompt
 
 
-def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, max_retries = 10, offset_radius_meters = 25) -> list:
+def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, max_retries = 10, offset_radius_meters = 25, save_images : bool = False, save_folder : str = None) -> list:
     """
     Leverages the Mapillary API to download images by sampling num_points.
     NOTE: images <= num_points since some points won't have images associated. 
@@ -97,6 +98,8 @@ def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, m
         delta: Search radius in degrees for initial bbox (roughly 500m for 0.005)
         max_retries: Maximum retry attempts per point with random offset if metadata not found
         offset_radius_meters: Radius in meters for random offset retries (~25m default)
+        save_images: If True, save downloaded images to disk
+        save_folder: Folder path to save images to (required if save_images=True)
 
     Returns:
         List of base64-encoded image strings
@@ -119,6 +122,12 @@ def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, m
     if not access_token:
         raise ValueError("MAPILLARY_TOKEN environment variable not set")
 
+    if save_images:
+        if save_folder is None:
+            raise ValueError("save_folder must be provided when save_images=True")
+        save_path = Path(save_folder)
+        save_path.mkdir(parents=True, exist_ok=True)
+
     url = "https://graph.mapillary.com/images"
     base_params = {
         "access_token": access_token,
@@ -127,6 +136,7 @@ def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, m
     }
 
     images_b64 = []
+    saved_count = 0
     
     # Sample points uniformly in this bounding box
     for point_idx in range(num_points):
@@ -181,7 +191,25 @@ def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, m
                 try:
                     img_response = requests.get(image_url, timeout=20)
                     if img_response.status_code == 200:
-                        img_b64 = base64.b64encode(img_response.content).decode('utf-8')
+                        img_content = img_response.content
+                        
+                        # Save image if requested
+                        if save_images:
+                            # Determine file extension from URL or content type
+                            ext = 'jpg'  # default
+                            if '.jpg' in image_url.lower() or '.jpeg' in image_url.lower():
+                                ext = 'jpg'
+                            elif '.png' in image_url.lower():
+                                ext = 'png'
+                            
+                            # Use image ID from metadata if available, otherwise use index
+                            img_id = img_metadata.get('id', f'img_{len(images_b64)}')
+                            file_path = save_path / f"{img_id}.{ext}"
+                            file_path.write_bytes(img_content)
+                            saved_count += 1
+                        
+                        # Encode to base64
+                        img_b64 = base64.b64encode(img_content).decode('utf-8')
                         images_b64.append(img_b64)
                     # If status not 200, just continue to next point (no retry)
                 except requests.exceptions.Timeout as e:
@@ -192,6 +220,8 @@ def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, m
                     # Continue to next point, no retry
 
     print(f"Downloaded {len(images_b64)} images")
+    if save_images:
+        print(f"Saved {saved_count} images to {save_folder}")
     return images_b64
         
 
