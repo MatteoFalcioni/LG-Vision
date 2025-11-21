@@ -13,13 +13,13 @@ async def main():
     # Define graph
     graph = get_graph(checkpointer)
 
-    # Set user ID for storing memories
+    # Set thread ID for memory
     thread_id = str(uuid.uuid4())[:8]
-    config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 50}
+    config = {"configurable": {"thread_id": thread_id}}
     
     # TODO: get a mapillary image from api 
     images = get_mpllry_b64()
-    
+
     # Construct multimodal system message
     sys_msg = get_multimodal_prompt() 
 

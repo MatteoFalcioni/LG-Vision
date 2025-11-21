@@ -2,6 +2,10 @@ from langchain_core.messages import HumanMessage
 from state import MultiState
 from prompts.mpllry_prompt import prompt
 import base64
+import requests
+import random
+import os
+import math 
 
 # this is actually used in main.py
 def encode_b64_from_path(file_path):
@@ -80,11 +84,118 @@ def get_multimodal_prompt(good_imgs_paths : list[str], bad_imgs_paths : list[str
     return system_prompt
 
 
-def get_mpllry_b64(num_imgs : int) -> list:
+def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, max_retries = 10, offset_radius_meters = 25) -> list:
     """
-    Leverages the Mapillary API to download `num_imgs` images.
-    Encodes the images in base 64, and returns a list of the encodings
+    Leverages the Mapillary API to download images by sampling num_points.
+    NOTE: images <= num_points since some points won't have images associated. 
+    
+    Encodes the images in base 64, and returns a list of the encodings.
+
+    Args:
+        num_points: Number of images to retrieve
+        bbox: Bounding box as [lat_min, lat_max, lon_min, lon_max]. Defaults to Bologna area.
+        delta: Search radius in degrees for initial bbox (roughly 500m for 0.005)
+        max_retries: Maximum retry attempts per point with random offset if metadata not found
+        offset_radius_meters: Radius in meters for random offset retries (~25m default)
+
+    Returns:
+        List of base64-encoded image strings
     """
+    # bbox centered on Bologna
+    if bbox is None:
+        lat_min = 44.4789
+        lat_max = 44.5141
+        lon_min = 11.3205
+        lon_max = 11.3691
+    else:
+        lat_min, lat_max, lon_min, lon_max = bbox
+
+    # Approximate conversion for offset calculations
+    avg_lat = (lat_min + lat_max) / 2
+    meters_per_deg_lat = 111000  # meters per degree latitude
+    meters_per_deg_lon = 111000 * math.cos(math.radians(avg_lat))  # longitude depends on latitude
+
+    access_token = os.getenv('MAPILLARY_TOKEN')
+    if not access_token:
+        raise ValueError("MAPILLARY_TOKEN environment variable not set")
+
+    url = "https://graph.mapillary.com/images"
+    base_params = {
+        "access_token": access_token,
+        "fields": "id,sequence,thumb_1024_url,camera_type,computed_geometry,thumb_original_url",
+        "limit": 1
+    }
+
+    images_b64 = []
+    
+    # Sample points uniformly in this bounding box
+    for point_idx in range(num_points):
+        # Generate base random point
+        base_lat = random.uniform(lat_min, lat_max)
+        base_lon = random.uniform(lon_min, lon_max)
+        
+        # Try to find metadata, retrying with offset if not found
+        img_metadata = None
+        for attempt in range(max_retries):
+            # Calculate coordinates (with offset for retries)
+            if attempt > 0:
+                # Random offset within radius
+                angle = random.uniform(0, 2 * math.pi)
+                distance = offset_radius_meters * math.sqrt(random.uniform(0, 1))
+                
+                offset_lat = (distance / meters_per_deg_lat) * math.cos(angle)
+                offset_lon = (distance / meters_per_deg_lon) * math.sin(angle)
+                
+                lat = base_lat + offset_lat
+                lon = base_lon + offset_lon
+                
+                # Ensure we stay within bounds
+                lat = max(lat_min, min(lat_max, lat))
+                lon = max(lon_min, min(lon_max, lon))
+            else:
+                lat, lon = base_lat, base_lon
+            
+            # Construct bbox for Mapillary query
+            bbox_str = f"{lon-delta},{lat-delta},{lon+delta},{lat+delta}"
+            point_params = {**base_params, "bbox": bbox_str}
+            
+            try:
+                r = requests.get(url, params=point_params, timeout=15)
+                
+                if r.status_code == 200:
+                    data = r.json().get("data", [])
+                    if data:
+                        img_metadata = data[0]
+                        break  # Found metadata, exit retry loop
+                    # No data found, continue to next attempt with offset
+                # Status not 200, continue to next attempt
+            
+            except (requests.exceptions.Timeout, requests.exceptions.RequestException):
+                # Timeout or other request error, try with offset
+                continue
+        
+        # If we found metadata, try to download the image
+        if img_metadata:
+            image_url = img_metadata.get('thumb_1024_url')
+            if image_url:
+                try:
+                    img_response = requests.get(image_url, timeout=20)
+                    if img_response.status_code == 200:
+                        img_b64 = base64.b64encode(img_response.content).decode('utf-8')
+                        images_b64.append(img_b64)
+                    # If status not 200, just continue to next point (no retry)
+                except requests.exceptions.Timeout as e:
+                    print(f"Timeout downloading image from {image_url}: {e}")
+                    # Continue to next point, no retry
+                except requests.exceptions.RequestException as e:
+                    print(f"Error downloading image from {image_url}: {e}")
+                    # Continue to next point, no retry
+
+    print(f"Downloaded {len(images_b64)} images")
+    return images_b64
+        
+
+
 
 
 

@@ -3,15 +3,22 @@ from langgraph.types import Command
 from typing import Literal
 from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel
 
-from .state import MultiState
-from .utils import prepare_multimodal_message
-from .prompts.mpllry_prompt import mpllry_prompt
+from state import MultiState
+from utils import prepare_multimodal_message
 
+# Structured output
+class BinaryOutput(BaseModel):
+    response: Literal["yes", "no"]
+
+# make its output structured: yes/no
 mpllry_agent = create_agent(
     model=ChatOpenAI(model="gpt-4o-mini"),
     tools=[],
-    system_prompt=mpllry_prompt
+    system_prompt="You are an AI assitant that evaluates the quality of Mapilary images",  # short prompt because the real one is passed at runtime
+    state_schema=MultiState,
+    response_format=BinaryOutput
 )
 
 async def multimodal_node(state: MultiState) -> Command[Literal["__end__"]]:   # after multimodal -> stop 
