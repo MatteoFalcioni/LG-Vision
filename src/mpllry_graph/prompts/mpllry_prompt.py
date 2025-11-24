@@ -1,23 +1,34 @@
 prompt = """
-You are a helpful AI assistant that evaluates the quality of street view images, downloaded from the Mapillary app. 
-
 Your goal is to accept or discard images given their quality. 
 In the following I will list criteria that you need to follow for your evaluation, and show you examples of images that you would accept or reject.
 
 ## Evaluation Criteria
 
-Follow these rules to evaluate if an image is acceptable or not. 
+Follow these rules to evaluate whether an image is acceptable.
 
-Accept an image if **all the following parameters are satisfied**: 
-- the image it shows clearly a complete view of the scene without being occluded
-- the image is not blurry
+Accept the image ONLY if all of the following parameters are satisfied:
 
-Discard an image if **one of the following condition is met**:
-- the view is occluded by something, or
-- the image is blurry 
+- The image clearly shows a complete view of the scene without being occluded.
 
-If you accept an image, answer 'yes'. 
-If you discard an image, answer 'no'.
+- The image is sharp and not blurry.
+
+- The image features significant architectural elements such as buildings, houses, porticoes, churches, etc.
+
+Discard the image if any of the following conditions are met:
+
+- The view is occluded or obstructed by objects.
+
+- The image is excessively blurry or out of focus, to the point where elements of the image are not well distinguishable.
+
+- The camera angle is too tilted downwards, capturing only the street or the ground.
+
+- The image does not contain any significant architectural elements.
+
+The image can be tilted, that is not a problem.
+
+Your answers MUST be composed of two parths: 
+* a 'response' that you will fill with 'yes' if you accept the image, or fill with 'no' if you discard it;
+* an 'reason' that you will fill with the reason explaining why you accepted or discarded an image. 
 
 ## Examples 
 

@@ -5,7 +5,7 @@ from langchain.agents import create_agent
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from pydantic import BaseModel
-
+from typing import Annotated
 from state import MultiState
 from utils import prepare_multimodal_message
 
@@ -14,12 +14,13 @@ load_dotenv()
 # Structured output
 class BinaryOutput(BaseModel):
     response: Literal["yes", "no"]
+    reason: Annotated[str, "The reason why you accepted or discarded an image"]
 
 # make its output structured: yes/no
 mpllry_agent = create_agent(
     model=ChatOpenAI(model="gpt-4o-mini"),
     tools=[],
-    system_prompt="You are an AI assistant that evaluates the quality of Mapilary images.",  # short prompt because the real one is passed at runtime
+    system_prompt="You are a helpful AI assistant that evaluates the quality of street view images, downloaded from the Mapillary app. ",  # short prompt because the real one is passed at runtime
     state_schema=MultiState,
     response_format=BinaryOutput
 )
@@ -47,9 +48,11 @@ async def multimodal_node(state: MultiState) -> Command[Literal["__end__"]]:   #
         goto="__end__"
     )
 
-def get_graph(checkpointer, save_display=False) -> StateGraph:
+def get_graph(checkpointer=None) -> StateGraph:
     """
-    Get the builder for the graph
+    Builds and compiles the graph. 
+
+    If a checkpointer is provided, the graph will be compiled with the checkpointer.
     """
     builder = StateGraph(MultiState)
     # nodes
@@ -57,6 +60,9 @@ def get_graph(checkpointer, save_display=False) -> StateGraph:
     # edges
     builder.add_edge(START, "multimodal_agent")
 
-    graph = builder.compile(checkpointer=checkpointer)
+    if checkpointer is None:
+        graph = builder.compile()
+    else: 
+        graph = builder.compile(checkpointer=checkpointer)
 
     return graph

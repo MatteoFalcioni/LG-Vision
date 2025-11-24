@@ -8,6 +8,33 @@ import os
 import math
 from pathlib import Path 
 
+def detect_image_format(image_bytes: bytes) -> tuple[str, str]:
+    """
+    Detect image format from bytes using magic bytes (file signatures).
+    
+    Args:
+        image_bytes: Raw image bytes
+        
+    Returns:
+        Tuple of (mime_type, extension) e.g., ('image/jpeg', 'jpg')
+    """
+    # Check magic bytes (most reliable method)
+    if image_bytes.startswith(b'\xff\xd8\xff'):
+        print("Detected image format: JPEG")
+        return 'image/jpeg', 'jpg'
+    elif image_bytes.startswith(b'\x89PNG\r\n\x1a\n'):
+        print("Detected image format: PNG")
+        return 'image/png', 'png'
+    elif image_bytes.startswith(b'GIF87a') or image_bytes.startswith(b'GIF89a'):
+        print("Detected image format: GIF")
+        return 'image/gif', 'gif'
+    elif image_bytes.startswith(b'RIFF') and b'WEBP' in image_bytes[:12]:
+        print("Detected image format: WebP")
+        return 'image/webp', 'webp'
+    else:
+        # Fallback: assume JPEG (most common for Mapillary)
+        print("Could not detect image format, defaulting to JPEG")
+        return 'image/jpeg', 'jpg'
 
 def encode_b64_from_path(file_path):
     with open(file_path, "rb") as f:
@@ -38,7 +65,7 @@ def prepare_multimodal_message(state: MultiState) -> HumanMessage:
         content_blocks.append({
             "type": "image",
             "base64": img_b64,
-            "mime_type": "image/png"  # it would be better to auto detect myme at runtime - so maybe img encoding should be here and not in main
+            "mime_type": "image/jpeg"  # NOTE: mpllry images are jpg
         })
 
 
@@ -52,34 +79,22 @@ def get_multimodal_prompt(good_imgs_paths : list[str], bad_imgs_paths : list[str
     Constructs a multimodal system message, given the textual prompt and images to refer to. 
     The textual prompt defaults to our own custom system prompt.
     """
-    content = [[{"type": "text", "text": text}]]  # start with the prompt
-
+    content = [{"type": "text", "text": text}]  # start with the prompt
+    
     # encode both good and bad images
     good_b64 = encode_b64_paths(good_imgs_paths)
     bad_b64  = encode_b64_paths(bad_imgs_paths)
 
-    # add good images
+    # add good images (NOTE: they are png)
     for good_img in good_b64:
         good_text = "This image is acceptable:"
-        content.append(
-            {"type" : "text", "text" : good_text},
-            {
-                "type" : "image",
-                "base64" : good_img,
-                "mime_type" : "image/png"  # or image/jpg if jpg
-            }
-        )
+        content.append({"type" : "text", "text" : good_text})
+        content.append({"type" : "image", "base64" : good_img, "mime_type" : "image/png"})
     # add bad images
     for bad_img in bad_b64:
         bad_text = "This image is discardable:"
-        content.append(
-            {"type" : "text", "text" : bad_text},
-            {
-                "type" : "image",
-                "base64" : bad_img,
-                "mime_type" : "image/png"  # or image/jpg if jpg
-            }
-        )
+        content.append({"type" : "text", "text" : bad_text})
+        content.append({"type" : "image", "base64" : bad_img, "mime_type" : "image/png"})
 
     system_prompt = HumanMessage(content_blocks=content)
     return system_prompt
@@ -193,15 +208,11 @@ def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, m
                     if img_response.status_code == 200:
                         img_content = img_response.content
                         
+                        # Detect actual image format from content
+                        mime_type, ext = detect_image_format(img_content)
+                        
                         # Save image if requested
                         if save_images:
-                            # Determine file extension from URL or content type
-                            ext = 'jpg'  # default
-                            if '.jpg' in image_url.lower() or '.jpeg' in image_url.lower():
-                                ext = 'jpg'
-                            elif '.png' in image_url.lower():
-                                ext = 'png'
-                            
                             # Use image ID from metadata if available, otherwise use index
                             img_id = img_metadata.get('id', f'img_{len(images_b64)}')
                             file_path = save_path / f"{img_id}.{ext}"
