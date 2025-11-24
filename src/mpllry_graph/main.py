@@ -23,21 +23,16 @@ async def main():
     thread_id = str(uuid.uuid4())[:8]
     config = {"configurable": {"thread_id": thread_id}}
     
-    '''# get a mapillary image from api 
+    # get a mapillary image from api 
     images = get_mpllry_b64(
-        num_points=1,
+        num_points=3,
         save_images=True,
         save_folder=f"images/run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         )
     
     if len(images) == 0:
         print("No images found. Stopping execution.")
-        return   # stop execution if no images are found'''
-
-    path = "images/run_20251124_154556/1182020198891070.jpg"
-    #encode image to base64
-    with open(path, "rb") as image_file:
-        images = [base64.b64encode(image_file.read()).decode('utf-8')]
+        return   # stop execution if no images are found
 
     # Construct multimodal system message
     # 1) get paths of the examples (good = acceptable images, bad = discardable images) 

@@ -100,7 +100,7 @@ def get_multimodal_prompt(good_imgs_paths : list[str], bad_imgs_paths : list[str
     return system_prompt
 
 
-def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, max_retries = 10, offset_radius_meters = 25, save_images : bool = False, save_folder : str = None) -> list:
+def get_mpllry_b64(num_points : int, bbox : list[float] = None, delta = 0.005, max_retries = 10, offset_radius_meters = 50, save_images : bool = False, save_folder : str = None) -> list:
     """
     Leverages the Mapillary API to download images by sampling num_points.
     NOTE: images <= num_points since some points won't have images associated. 
