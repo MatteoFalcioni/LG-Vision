@@ -18,11 +18,8 @@ Discard an image if **one of the following condition is met**:
 
 If you accept an image, answer 'yes'. 
 If you discard an image, answer 'no'.
-"""
 
-
-'''
 ## Examples 
 
 You will be shown in the following some examples of acceptable or discardable images.
-'''
+"""

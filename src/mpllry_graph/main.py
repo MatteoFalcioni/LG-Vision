@@ -26,7 +26,7 @@ async def main():
         )
 
     # Construct multimodal system message
-    # sys_msg = get_multimodal_prompt() 
+    sys_msg = get_multimodal_prompt() 
 
     print("\n=== Evaluating Mapillary images ===\n")
 
@@ -34,7 +34,7 @@ async def main():
     
         # Initialize state with the image 
         init_state = {
-            "messages": [HumanMessage(content="analize this image")],
+            "messages": [sys_msg],
             "images": [img_b64]
         }
         

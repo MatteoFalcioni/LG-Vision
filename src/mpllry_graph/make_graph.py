@@ -19,7 +19,7 @@ class BinaryOutput(BaseModel):
 mpllry_agent = create_agent(
     model=ChatOpenAI(model="gpt-4o-mini"),
     tools=[],
-    system_prompt="You are an AI assistant that evaluates the quality of Mapilary images",  # short prompt because the real one is passed at runtime
+    system_prompt="You are an AI assistant that evaluates the quality of Mapilary images.",  # short prompt because the real one is passed at runtime
     state_schema=MultiState,
     response_format=BinaryOutput
 )

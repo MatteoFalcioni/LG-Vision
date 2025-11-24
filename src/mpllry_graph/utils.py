@@ -8,7 +8,7 @@ import os
 import math
 from pathlib import Path 
 
-# this is actually used in main.py
+
 def encode_b64_from_path(file_path):
     with open(file_path, "rb") as f:
         return base64.b64encode(f.read()).decode('utf-8')
